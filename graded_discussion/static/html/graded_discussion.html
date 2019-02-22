@@ -1,0 +1,25 @@
+<div class="graded_discussion_block">
+    {% if staff %}
+        <div class="rubric-section">
+            <p>rubric</p>
+        </div>
+        <div class="student-list-section">
+            <p>Student</p>
+        </div>
+        <div class="grading-section">
+            <div class="contributions-section">
+                <p>Contributions</p>
+            </div>
+            <div class="grade-section">
+                <p>Enter the grade</p>
+            </div>
+        </div>
+    {% else %}
+        <div class="contributions-section">
+            <p>Contributions</p>
+        </div>
+        <div class="feedback-section">
+            <p>feedback</p>
+        </div>
+    {% endif %}
+</div>
