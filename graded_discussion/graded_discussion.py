@@ -2,6 +2,10 @@
 
 import pkg_resources
 
+from api_discussion import ApiDiscussion
+
+from django.conf import settings
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
 from xblock.core import XBlock
@@ -10,13 +14,15 @@ from xblock.fragment import Fragment
 from xblock.validation import ValidationMessage
 
 from xblockutils.resources import ResourceLoader
+from xblockutils.settings import XBlockWithSettingsMixin
 from xblockutils.studio_editable import StudioEditableXBlockMixin
 
 
 LOADER = ResourceLoader(__name__)
 
 
-class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin):
+@XBlock.wants("settings")
+class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettingsMixin):
     """
     GradedDiscussionXBlock Class
     """
@@ -69,7 +75,7 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin):
         display_name=_("Discussion Topic"),
         scope=Scope.content,
         help=_("Select the topic that you want to use for grading."),
-        values_provider=lambda self: ["topic_1", "topic_2", "topic_3"],
+        values_provider=lambda self: self.get_discussion_topics(),
     )
 
     # Possible editable fields
@@ -82,6 +88,13 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin):
         "end_date",
         "discussion_topics",
     )
+
+    def get_discussion_topics(self):
+        """
+        """
+        topics = self.api_discussion.get_topics_names()
+
+        return ["{}({})".format(topic[0], topic[1]) for topic in topics]
 
     def is_course_staff(self):
         """
@@ -116,6 +129,19 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin):
 
         if start_date and end_date and end_date <= start_date:
             validation.add(ValidationMessage(ValidationMessage.ERROR, u"The start date must be before the end date"))
+
+    @cached_property
+    def api_discussion(self):
+        """
+        Returns an instance of ApiDiscussion
+        """
+        try:
+            client_id = self.get_xblock_settings()["client_id"]
+            client_secret = self.get_xblock_settings()["client_secret"]
+        except KeyError:
+            raise
+
+        return ApiDiscussion(settings.LMS_ROOT_URL, unicode(self.course_id), client_id, client_secret)
 
     # TO-DO: change this to create the scenarios you'd like to see in the
     # workbench while developing your XBlock.
