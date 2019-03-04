@@ -5,22 +5,25 @@ import pkg_resources
 from api_discussion import ApiDiscussion
 
 from django.conf import settings
+from django.core.cache import cache
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
 from xblock.core import XBlock
 from xblock.fields import Scope, String, Float, DateTime
-from xblock.fragment import Fragment
+from web_fragments.fragment import Fragment
 from xblock.validation import ValidationMessage
 
 from xblockutils.resources import ResourceLoader
 from xblockutils.settings import XBlockWithSettingsMixin
 from xblockutils.studio_editable import StudioEditableXBlockMixin
 
+from webob.response import Response
 
 LOADER = ResourceLoader(__name__)
 
 
+@XBlock.wants("user")
 @XBlock.wants("settings")
 class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettingsMixin):
     """
@@ -71,8 +74,9 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
         help=_("Due date of this assignment.")
     )
 
-    discussion_topics = String(
+    discussion_topic = String(
         display_name=_("Discussion Topic"),
+        default=None,
         scope=Scope.content,
         help=_("Select the topic that you want to use for grading."),
         values_provider=lambda self: self.get_discussion_topics(),
@@ -86,49 +90,8 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
         "grading_message",
         "start_date",
         "end_date",
-        "discussion_topics",
+        "discussion_topic",
     )
-
-    def get_discussion_topics(self):
-        """
-        """
-        topics = self.api_discussion.get_topics_names()
-
-        return ["{}({})".format(topic[0], topic[1]) for topic in topics]
-
-    def is_course_staff(self):
-        """
-         Check if user is course staff.
-        """
-        return getattr(self.xmodule_runtime, 'user_is_staff', False)
-
-    def resource_string(self, path):
-        """Handy helper for getting resources from our kit."""
-        data = pkg_resources.resource_string(__name__, path)
-        return data.decode("utf8")
-
-    # TO-DO: change this view to display your data your own way.
-    def student_view(self, context=None):
-        """
-        The primary view of the GradedDiscussionXBlock, shown to students
-        when viewing courses.
-        """
-        context = {"staff": self.is_course_staff()}
-        frag = Fragment(LOADER.render_template("static/html/graded_discussion.html", context))
-        frag.add_css(self.resource_string("static/css/graded_discussion.css"))
-        frag.add_javascript(self.resource_string("static/js/src/graded_discussion.js"))
-        frag.initialize_js('GradedDiscussionXBlock')
-        return frag
-
-    def validate_field_data(self, validation, data):
-        """
-        This method validates the data from studio before it is saved
-        """
-        start_date = data.start_date
-        end_date = data.end_date
-
-        if start_date and end_date and end_date <= start_date:
-            validation.add(ValidationMessage(ValidationMessage.ERROR, u"The start date must be before the end date"))
 
     @cached_property
     def api_discussion(self):
@@ -141,7 +104,99 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
         except KeyError:
             raise
 
-        return ApiDiscussion(settings.LMS_ROOT_URL, unicode(self.course_id), client_id, client_secret)
+        return ApiDiscussion(settings.LMS_ROOT_URL, unicode(self.course_id), client_id, client_secret, self.location)
+
+    def get_discussion_topics(self):
+        """
+        """
+        return self.api_discussion.get_topics_names()
+
+    def is_course_staff(self):
+        """
+         Check if user is course staff.
+        """
+        return getattr(self.xmodule_runtime, "user_is_staff", False)
+
+    @XBlock.handler
+    def refresh_data(self, request, suffix=""):
+        """
+        """
+        username = request.GET.get("user")
+        cache.delete(self.location)
+        contributions = self._get_contributions(username) if username else self._get_contributions(self.username)
+        return Response(json=contributions)
+
+    def resource_string(self, path):
+        """Handy helper for getting resources from our kit."""
+        data = pkg_resources.resource_string(__name__, path)
+        return data.decode("utf8")
+
+    # TO-DO: change this view to display your data your own way.
+    def student_view(self, context=None):
+        """
+        The primary view of the GradedDiscussionXBlock, shown to students
+        when viewing courses.
+        """
+        frag = Fragment(LOADER.render_django_template("static/html/graded_discussion.html", self._get_context()))
+        frag.add_css(self.resource_string("static/css/graded_discussion.css"))
+        frag.add_javascript(self.resource_string("static/js/src/graded_discussion.js"))
+        frag.initialize_js('GradedDiscussionXBlock')
+        return frag
+
+    @cached_property
+    def username(self):
+        """
+        Returns the username for the currently user
+        """
+        user = self.runtime.service(self, 'user').get_current_user()
+        return user.opt_attrs['edx-platform.username']
+
+    def validate_field_data(self, validation, data):
+        """
+        This method validates the data from studio before it is saved
+        """
+        start_date = data.start_date
+        end_date = data.end_date
+
+        if start_date and end_date and end_date <= start_date:
+            validation.add(ValidationMessage(ValidationMessage.ERROR, u"The start date must be before the end date"))
+
+    def _get_context(self):
+        """
+        """
+        if self.is_course_staff():
+            return dict(
+                user_is_staff=True,
+                rubric=self.rubric,
+                users=[],
+                reload_url=self.runtime.local_resource_url(self, 'public/img/reload-icon.png'),
+            )
+
+        return dict(
+            user_is_staff=False,
+            contributions=self._get_contributions(self.username),
+            grading_message=self.grading_message,
+            reload_url=self.runtime.local_resource_url(self, 'public/img/reload-icon.png'),
+        )
+
+    def _get_contributions(self, username):
+        """
+        This returns the contributions for a given username
+        """
+        cache_block = cache.get(self.location, {})
+        contributions = cache_block.get(username)
+
+        if contributions:
+            return contributions
+
+        if self.discussion_topic:
+            contributions = self.api_discussion.get_user_contributions(username, self.discussion_topic)
+        else:
+            contributions = self.api_discussion.get_user_contributions(username)
+
+        cache_block[username] = contributions
+        cache.set(self.location, cache_block, 3600)
+        return contributions
 
     # TO-DO: change this to create the scenarios you'd like to see in the
     # workbench while developing your XBlock.
