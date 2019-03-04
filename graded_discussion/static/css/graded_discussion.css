@@ -1,1 +1,70 @@
 /* CSS for GradedDiscussionXBlock */
+.graded_discussion_block{
+    border: 1px solid #cecece;
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.graded_discussion_block .contributions-section ol {
+    list-style: none;
+    padding: 0 40px 0 40px;
+}
+
+.graded_discussion_block .feedback-section {
+    padding-left: 30px;
+}
+
+.graded_discussion_block .contributions-section p{
+    padding-left: 30px;
+    font-weight: bold;
+}
+
+.graded_discussion_block .contributions-section li{
+    margin-bottom: 1em;
+}
+
+.graded_discussion_block .contributions-section li p {
+    margin: 0;
+    padding-left: 0px;
+    font-weight: unset;
+}
+
+.graded_discussion_block .contributions-section .reload-button {
+    float: right;
+    border-radius: 8px;
+    border: 1px solid #cecece;
+    cursor: pointer;
+}
+
+.graded_discussion_block .contributions-section .date-time {
+  font-size:0.7em;
+  display:block;
+  font-style: italic;
+  text-align:right;
+  padding-top: 1em;
+}
+
+.graded_discussion_block .contributions-section .parent-contribution {
+  float: left;
+  font-size:0.7em;
+  font-style: italic;
+  padding-top: 1em;
+}
+
+.graded_discussion_block .contributions-section .date-time:before {
+  content: "Posted on: ";
+}
+
+.graded_discussion_block .contributions-section .thread-contribution {
+    border: 1px solid #bb0a0a;
+    padding: 0.7em 0.5em 0.5em 1.2em;
+    border-radius: 10px;
+    box-shadow: 5px 6px 8px 0px rgba(0, 0, 0, 0.2);
+}
+
+.graded_discussion_block .contributions-section .comment-contribution {
+    border: 1px solid #0d400d;
+    padding: 0.7em 0.5em 0.5em 1.2em;
+    border-radius: 10px;
+    box-shadow: 5px 6px 8px 0px rgba(0, 0, 0, 0.2);
+}

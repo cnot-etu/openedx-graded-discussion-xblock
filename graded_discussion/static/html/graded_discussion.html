@@ -1,5 +1,5 @@
 <div class="graded_discussion_block">
-    {% if staff %}
+    {% if user_is_staff %}
         <div class="rubric-section">
             <p>rubric</p>
         </div>
@@ -17,9 +17,34 @@
     {% else %}
         <div class="contributions-section">
             <p>Contributions</p>
+            <ol class="list-contributions">
+                {% for contribution in contributions %}
+                    {% if contribution.kind == "thread" %}
+                        <li>
+                            <div class="thread-contribution">
+                                <p>{{ contribution.contribution }}</p>
+                                <span class="date-time" value="{{ contribution.created_at }}"></span>
+                            </div>
+                        </li>
+                    {% else %}
+                    <li>
+                        <div class="comment-contribution">
+                            <p>{{ contribution.contribution }}</p>
+                            <span class="parent-contribution">{{ contribution.parent.name }} by {{ contribution.parent.author }}</span>
+                            <span class="date-time" value="{{ contribution.created_at }}"></span>
+                        </div>
+                    </li>
+                    {% endif %}
+                {% empty %}
+                    <p>You don't have any contributions</p>
+                {% endfor %}
+            </ol>
+            <button class="reload-button" onclick="this.blur();">
+                <span class="fa fa-refresh"></span>
+            </button>
         </div>
         <div class="feedback-section">
-            <p>feedback</p>
+            <p>{{ grading_message }}</p>
         </div>
     {% endif %}
 </div>
