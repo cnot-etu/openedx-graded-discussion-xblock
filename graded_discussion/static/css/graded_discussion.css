@@ -1,4 +1,6 @@
 /* CSS for GradedDiscussionXBlock */
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css");
+
 .graded_discussion_block{
     border: 1px solid #cecece;
     border-radius: 10px;
@@ -67,4 +69,84 @@
     padding: 0.7em 0.5em 0.5em 1.2em;
     border-radius: 10px;
     box-shadow: 5px 6px 8px 0px rgba(0, 0, 0, 0.2);
+}
+
+.graded_discussion_block .staff-section{
+    display: flex;
+    justify-content: space-around;
+}
+
+.graded_discussion_block .staff-section .student-list-section ol{
+    list-style: none;
+    padding: 0 0 0 0;
+}
+
+.graded_discussion_block .staff-section .filters .sort-by-date ul{
+    list-style: none;
+}
+
+.graded_discussion_block .staff-section .filters .teams-filter ul{
+    list-style: none;
+}
+
+.graded_discussion_block .staff-section .filters .cohort-filter ul{
+    list-style: none;
+}
+
+.graded_discussion_block .staff-section .student-list-section li{
+    border: 1px solid #0d400d;
+    padding: 0.7em 0.5em 0.5em 0.5em;
+    border-radius: 10px;
+    margin-bottom: 1em;
+    cursor: pointer;
+}
+
+.graded_discussion_block .staff-section .student-list-section .active{
+    box-shadow: 5px 6px 8px 0px rgba(0, 0, 0, 0.2);}
+
+.graded_discussion_block .staff-section .student-list-section img{
+    width: 40px;
+}
+
+.graded_discussion_block .staff-section .student-list-section .user-info{
+    display: inline-block;
+    vertical-align: middle;
+    padding-left: 1em;
+}
+
+.graded_discussion_block .student-list-section .date-time {
+  font-size:0.6em;
+  display:block;
+  font-style: italic;
+  text-align:right;
+  padding-top: 1em;
+  text-align: end;
+}
+
+.graded_discussion_block .student-list-section .date-time:before{
+  content: "Last post on: ";
+}
+
+.graded_discussion_block .search .search-input {
+    text-indent: 32px;
+}
+
+.graded_discussion_block .search .fa-search {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+}
+
+.graded_discussion_block .search {
+  position: relative;
+  color: #aaa;
+  font-size: 16px;
+  margin-bottom: 1em;
+}
+
+.graded_discussion_block .staff-section .rubric-section{
+    border: 1px solid #0d400d;
+    padding: 0.7em 0.7em 0.5em 0.7em;
+    border-radius: 10px;
+    margin-bottom: 2em;
 }

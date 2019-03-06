@@ -1,50 +1,121 @@
 <div class="graded_discussion_block">
     {% if user_is_staff %}
-        <div class="rubric-section">
-            <p>rubric</p>
-        </div>
-        <div class="student-list-section">
-            <p>Student</p>
-        </div>
-        <div class="grading-section">
-            <div class="contributions-section">
-                <p>Contributions</p>
+        <div class="staff-section">
+            <aside class="filters">
+                <div class="search">
+                    <span class="icon fa fa-search" aria-hidden="true"></span>
+                    <input class="search-input" type="text" placeholder="Search for names..">
+                </div>
+                <div class="sort-by-date">
+                    <p>Sorted by</p>
+                    <ul>
+                        <li class="oldest">Oldest</li>
+                        <li class="newest">Newest</li>
+                    </ul>
+                </div>
+                <div class="teams-filter">
+                    {% if teams %}
+                        <p>Teams</p>
+                        <ul>
+                            {% for team in teams %}
+                                <li team-id="{{team.id}}">{{ team.name }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+                <div class="cohort-filter">
+                    {% if cohorts %}
+                        <p>Cohorts</p>
+                        <ul>
+                            {% for id, cohort in cohorts.items %}
+                                <li cohort-id="{{ id }}"> {{ cohort }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </aside>
+            <div>
+                <div class="rubric-section">
+                    <p>{{rubric|safe }}</p>
+                </div>
+                <div class="student-list-section">
+                    <ol class="users-list">
+                        {% for user in users %}
+                            <li class="item" cohort-id="{{ user.cohort_id }}" team-id="{{ user.team.id }}" username="{{ user.username }}">
+                                <img src="{{user.image_url}}">
+                                <div class="user-info">
+                                    <label>{{ user.username }}</label>
+                                    <span class="date-time" value="{{ user.last_post }}"></span>
+                                </div>
+                            </li>
+                        {% empty %}
+                            <p>No available users to grade</p>
+                        {% endfor %}
+                    </ol>
+                </div>
             </div>
-            <div class="grade-section">
-                <p>Enter the grade</p>
+
+            <div class="grading-section">
+                <div class="contributions-section">
+                    <p>Contributions</p>
+                    <ol class="list-contribution"></ol>
+                </div>
+                <div class="grade-section">
+                    <input id="grade-button" type="button" name="grade" value="Enter Grade">
+                </div>
             </div>
         </div>
     {% else %}
-        <div class="contributions-section">
-            <p>Contributions</p>
-            <ol class="list-contributions">
-                {% for contribution in contributions %}
-                    {% if contribution.kind == "thread" %}
+        <div class="student-section">
+            <div class="contributions-section">
+                <p>Contributions</p>
+                <ol class="list-contribution">
+                    {% for contribution in contributions %}
+                        {% if contribution.kind == "thread" %}
+                            <li>
+                                <div class="thread-contribution">
+                                    <p>{{ contribution.contribution }}</p>
+                                    <span class="date-time" value="{{ contribution.created_at }}"></span>
+                                </div>
+                            </li>
+                        {% else %}
                         <li>
-                            <div class="thread-contribution">
+                            <div class="comment-contribution">
                                 <p>{{ contribution.contribution }}</p>
+                                <span class="parent-contribution">{{ contribution.parent.name }} by {{ contribution.parent.author }}</span>
                                 <span class="date-time" value="{{ contribution.created_at }}"></span>
                             </div>
                         </li>
-                    {% else %}
-                    <li>
-                        <div class="comment-contribution">
-                            <p>{{ contribution.contribution }}</p>
-                            <span class="parent-contribution">{{ contribution.parent.name }} by {{ contribution.parent.author }}</span>
-                            <span class="date-time" value="{{ contribution.created_at }}"></span>
-                        </div>
-                    </li>
-                    {% endif %}
-                {% empty %}
-                    <p>You don't have any contributions</p>
-                {% endfor %}
-            </ol>
-            <button class="reload-button" onclick="this.blur();">
-                <span class="fa fa-refresh"></span>
-            </button>
-        </div>
-        <div class="feedback-section">
-            <p>{{ grading_message }}</p>
+                        {% endif %}
+                    {% empty %}
+                        <p>You don't have any contributions</p>
+                    {% endfor %}
+                </ol>
+                <button class="reload-button" onclick="this.blur();">
+                    <span class="fa fa-refresh"></span>
+                </button>
+            </div>
+            <div class="feedback-section">
+                {% if score %}
+                    <p>{{ grading_message }}</p>
+                    <p>Your score is: {{ score }}</p>
+                {% else %}
+                    <p>{{ grading_message }}</p>
+                {% endif %}
+            </div>
         </div>
     {% endif %}
+</div>
+
+<div id="dialog-form" title="Enter Grade">
+  <form>
+    <fieldset>
+      <label for="grade">Grade</label>
+      <input type="text" name="grade" id="grade" placeholder="Enter the grade ..." class="text ui-widget-content ui-corner-all">
+      <label for="comment">Comment</label>
+      <textarea name="comment" id="comment" class="text ui-widget-content ui-corner-all"></textarea>
+      <!-- Allow form submission with keyboard without duplicating the dialog button -->
+      <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+    </fieldset>
+  </form>
 </div>
