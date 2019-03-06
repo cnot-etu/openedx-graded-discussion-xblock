@@ -3,9 +3,24 @@
 import pkg_resources
 
 from api_discussion import ApiDiscussion
+from api_teams import ApiTeams
+
+from courseware.courses import get_course_by_id
+from student.models import (
+    CourseEnrollmentManager,
+    user_by_anonymous_id,
+    get_user_by_username_or_email,
+    anonymous_id_for_user
+)
+from submissions import api as submissions_api
+from submissions.models import StudentItem
+
+from openedx.core.djangoapps.course_groups.cohorts import get_cohort_names, get_cohort_id
+from openedx.core.djangoapps.user_api.accounts.image_helpers import get_profile_image_urls_for_user
 
 from django.conf import settings
 from django.core.cache import cache
+from django.core.exceptions import PermissionDenied
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
@@ -29,6 +44,8 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
     """
     GradedDiscussionXBlock Class
     """
+    has_score = True
+
     display_name = String(
         display_name=_("Display Name"),
         help=_("Component Name."),
@@ -40,7 +57,7 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
         display_name=_("Score"),
         help=_("Defines the number of points each problem is worth."),
         values={"min": 0, "step": .1},
-        default=1,
+        default=100,
         scope=Scope.settings
     )
 
@@ -106,16 +123,103 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
 
         return ApiDiscussion(settings.LMS_ROOT_URL, unicode(self.course_id), client_id, client_secret, self.location)
 
+    @cached_property
+    def api_teams(self):
+        """
+        Returns an instance of ApiTeams
+        """
+        try:
+            client_id = self.get_xblock_settings()["client_id"]
+            client_secret = self.get_xblock_settings()["client_secret"]
+        except KeyError:
+            raise
+
+        return ApiTeams(settings.LMS_ROOT_URL, client_id, client_secret, self.location)
+
+    @XBlock.handler
+    def enter_grade(self, request, suffix=''):
+        """
+        """
+        require(self.is_course_staff())
+        user = get_user_by_username_or_email(request.params.get('user'))
+
+        score = request.params.get('score')
+        comment = request.params.get('comment')
+
+        if not score:
+            return Response(json_body={"error": "Enter a valid grade"})
+
+        try:
+            score = int(score)
+        except ValueError:
+            return Response(json_body={"error": "Enter a valid grade"})
+
+        submission_id = self.get_submission_id(user)
+
+        submission = submissions_api.create_submission(submission_id, {'comment': comment})
+
+        submissions_api.set_score(submission['uuid'], score, self.max_score())
+
+        return Response(json_body={"success": "success"})
+
+    def get_comment(self):
+        """
+        """
+        submissions = submissions_api.get_submissions(self.submission_id)
+        if submissions:
+            return submissions[0]['answer']['comment']
+
     def get_discussion_topics(self):
         """
         """
         return self.api_discussion.get_topics_names()
+
+    def get_score(self, user):
+        """
+        Return student's current score.
+        """
+        score = submissions_api.get_score(self.get_submission_id(user))
+        if score:
+            return score['points_earned']
+
+    def get_student_list(self):
+        """
+        """
+        users = CourseEnrollmentManager().users_enrolled_in(self.course_id)
+        graded_students = self._get_graded_students()
+
+        return [
+            dict(
+                username=user.username,
+                image_url=get_profile_image_urls_for_user(user)["full"],
+                last_post=self._get_last_date_on_post(user.username),
+                cohort_id=get_cohort_id(user, self.course_id),
+                team=self.api_teams.get_user_team(unicode(self.course_id), user.username)
+            )
+            for user in users if not user.is_staff and user not in graded_students
+        ]
+
+    def get_submission_id(self, user):
+        """
+        """
+        return dict(
+            item_id=unicode(self.location),
+            item_type='graded_discussion',
+            course_id=unicode(self.course_id),
+            student_id=anonymous_id_for_user(user, self.course_id)
+        )
 
     def is_course_staff(self):
         """
          Check if user is course staff.
         """
         return getattr(self.xmodule_runtime, "user_is_staff", False)
+
+    def max_score(self):
+        """
+        Return the maximum score possible.
+        """
+        return self.points
 
     @XBlock.handler
     def refresh_data(self, request, suffix=""):
@@ -130,6 +234,20 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
         """Handy helper for getting resources from our kit."""
         data = pkg_resources.resource_string(__name__, path)
         return data.decode("utf8")
+
+    @cached_property
+    def score(self):
+        """
+        """
+        user = get_user_by_username_or_email(self.username)
+        return self.get_score(user)
+
+    @cached_property
+    def submission_id(self):
+        """
+        """
+        user = get_user_by_username_or_email(self.username)
+        return self.get_submission_id(user)
 
     # TO-DO: change this view to display your data your own way.
     def student_view(self, context=None):
@@ -168,15 +286,19 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
             return dict(
                 user_is_staff=True,
                 rubric=self.rubric,
-                users=[],
+                users=self.get_student_list(),
                 reload_url=self.runtime.local_resource_url(self, 'public/img/reload-icon.png'),
+                cohorts=get_cohort_names(get_course_by_id(self.course_id)),
+                teams=self.api_teams.get_course_teams(unicode(self.course_id)),
             )
 
+        comment = self.get_comment()
         return dict(
             user_is_staff=False,
             contributions=self._get_contributions(self.username),
-            grading_message=self.grading_message,
+            grading_message=comment if comment else self.grading_message,
             reload_url=self.runtime.local_resource_url(self, 'public/img/reload-icon.png'),
+            score=self.score,
         )
 
     def _get_contributions(self, username):
@@ -198,6 +320,30 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
         cache.set(self.location, cache_block, 3600)
         return contributions
 
+    def _get_graded_students(self):
+        """
+        """
+        students = StudentItem.objects.filter(
+            course_id=self.course_id,
+            item_id=unicode(self.location)
+        )
+        result = []
+        for student in students:
+            user = user_by_anonymous_id(student.student_id)
+            if self.get_score(user):
+                result.append(user)
+        return result
+
+    def _get_last_date_on_post(self, username):
+        """
+        """
+        contributions = self._get_contributions(username)
+        contributions.sort(key=lambda item: item["created_at"])
+        try:
+            return contributions[0].get("created_at")
+        except IndexError:
+            return ""
+
     # TO-DO: change this to create the scenarios you'd like to see in the
     # workbench while developing your XBlock.
     @staticmethod
@@ -215,3 +361,11 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
                 </vertical_demo>
              """),
         ]
+
+
+def require(assertion):
+    """
+    Raises PermissionDenied if assertion is not true.
+    """
+    if not assertion:
+        raise PermissionDenied
