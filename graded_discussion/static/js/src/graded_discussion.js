@@ -12,6 +12,7 @@ function GradedDiscussionXBlock(runtime, element) {
             }
         });
         updateDateTime();
+        $(".grading-section .grade-section").show();
     };
 
 
@@ -150,20 +151,6 @@ function GradedDiscussionXBlock(runtime, element) {
         $(".users-list li").sort(sortByNewest).appendTo('.users-list');
     });
 
-    $(".graded_discussion_block .cohort-filter li").click(function(){
-        var id = $(this).attr("cohort-id");
-        $(".student-list-section .item").filter(function() {
-          $(this).toggle($(this).attr("cohort-id") === id)
-        });
-    });
-
-    $(".graded_discussion_block .teams-filter li").click(function(){
-        var id = $(this).attr("team-id");
-        $(".student-list-section .item").filter(function() {
-          $(this).toggle($(this).attr("team-id") === id)
-        });
-    });
-
     $(".graded_discussion_block .users-list li").click(function(){
         var username = $(this).attr("username");
         $("li").removeClass("active");
@@ -175,6 +162,16 @@ function GradedDiscussionXBlock(runtime, element) {
         dialog.dialog( "open" );
     });
 
+    $(".graded_discussion_block .staff-section .menu-icon").click(function(){
+        $(".graded_discussion_block .staff-section .filters").fadeIn("slow");
+        $(this).hide();
+    });
+
+    $(".graded_discussion_block .staff-section .filters .close-button").click(function(){
+        $(".graded_discussion_block .staff-section .filters").hide();
+        $(".graded_discussion_block .staff-section .menu-icon").fadeIn("slow");
+    });
+
     $(".graded_discussion_block .search-input").on("keyup", function() {
         var value = $(this).val().toLowerCase();
         $(".student-list-section .item").filter(function() {
@@ -183,5 +180,22 @@ function GradedDiscussionXBlock(runtime, element) {
     });
 
     $(".users-list li").sort(sortByOldest).appendTo('.users-list');
+
+    $('.graded_discussion_block li :checkbox').change(function() {
+        var validIds = [];
+        $('.graded_discussion_block li :checkbox:checked').each(function() {
+            validIds.push($(this).attr("id"));
+        });
+        if (validIds.length == 0) {
+            $(".student-list-section .item").filter(function() {
+                $(this).toggle(true);
+            });
+        } else {
+            $(".student-list-section .item").filter(function() {
+                $(this).toggle(validIds.includes($(this).attr("team-id")) || validIds.includes($(this).attr("cohort-id")));
+            });
+        }
+
+    });
 
 }

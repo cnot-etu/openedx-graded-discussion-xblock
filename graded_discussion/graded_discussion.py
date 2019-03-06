@@ -256,6 +256,7 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
         when viewing courses.
         """
         frag = Fragment(LOADER.render_django_template("static/html/graded_discussion.html", self._get_context()))
+        frag.add_css_url("//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css")
         frag.add_css(self.resource_string("static/css/graded_discussion.css"))
         frag.add_javascript(self.resource_string("static/js/src/graded_discussion.js"))
         frag.initialize_js('GradedDiscussionXBlock')

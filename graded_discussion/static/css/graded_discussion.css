@@ -73,7 +73,7 @@
 
 .graded_discussion_block .staff-section{
     display: flex;
-    justify-content: space-around;
+    justify-content: flex-start;
 }
 
 .graded_discussion_block .staff-section .student-list-section ol{
@@ -83,14 +83,26 @@
 
 .graded_discussion_block .staff-section .filters .sort-by-date ul{
     list-style: none;
+    margin: 2px 0 3px 0;
+    padding-left: 20px;
 }
 
 .graded_discussion_block .staff-section .filters .teams-filter ul{
     list-style: none;
+    margin: 2px 0 3px 0;
+    padding-left: 20px;
+}
+
+.graded_discussion_block .staff-section .filters label{
+    font-size:0.8em;
+    font-style: italic;
+    color: #0075b4
 }
 
 .graded_discussion_block .staff-section .filters .cohort-filter ul{
     list-style: none;
+    margin: 2px 0 3px 0;
+    padding-left: 20px;
 }
 
 .graded_discussion_block .staff-section .student-list-section li{
@@ -149,4 +161,71 @@
     padding: 0.7em 0.7em 0.5em 0.7em;
     border-radius: 10px;
     margin-bottom: 2em;
+}
+
+.graded_discussion_block .staff-section .filters input[type='checkbox'] {
+    display: none;
+}
+
+.graded_discussion_block .staff-section .filters input:checked + label {
+    font-weight: bold;
+}
+
+.graded_discussion_block .staff-section .filters {
+    display: none;
+    margin-right: 20px;
+    font-style: italic;
+    padding: 10px;
+    background: lightgrey;
+    border-radius: 16px;
+    box-shadow: 2px 5px 8px 0px rgba(0, 0, 0, 0.5);
+}
+
+.graded_discussion_block .staff-section .filters .close-button{
+    display: flex;
+    color: #aaa;
+    justify-content: flex-end;
+    padding-bottom: 10px;
+}
+
+.graded_discussion_block .staff-section .menu-icon {
+    margin-right: 10px;
+}
+
+.graded_discussion_block .staff-section .info-section{
+    margin-right: 10px;
+}
+
+.graded_discussion_block .staff-section .grading-section{
+    flex: 1;
+}
+
+.graded_discussion_block .staff-section .grading-section .grade-section{
+    text-align: end;
+    display: none;
+}
+
+.graded_discussion_block .staff-section .filters li{
+    margin: 0 0 1px 0;
+}
+
+.graded_discussion_block .staff-section .filters p{
+    margin: 0 0 0 0;
+}
+
+#dialog-form form{
+  height: 100%;
+}
+
+#dialog-form form fieldset{
+  height: 100%;
+}
+
+#dialog-form form textarea{
+  height: 65%;
+  width: 100%;
+}
+
+.ui-dialog-titlebar .ui-button .ui-button-icon-primary {
+    position: static;
 }
