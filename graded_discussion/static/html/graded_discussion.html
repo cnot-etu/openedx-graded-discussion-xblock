@@ -43,7 +43,7 @@
                 <div class="student-list-section">
                     <ol class="users-list">
                         {% for user in users %}
-                            <li class="item" cohort-id="{{ user.cohort_id }}" team-id="{{ user.team.id }}" username="{{ user.username }}">
+                            <li class="item" cohort-id="{{ user.cohort_id }}" team-id="{{ user.team.id }}" username="{{ user.username }}" contributions="{{ user.contributions }}">
                                 <img src="{{user.image_url}}">
                                 <div class="user-info">
                                     <label>{{ user.username }}</label>
@@ -67,57 +67,36 @@
                 </div>
             </div>
         </div>
-    {% else %}
-        <div class="student-section">
-            <div class="contributions-section">
-                <p>Contributions</p>
-                <ol class="list-contribution">
-                    {% for contribution in contributions %}
-                        {% if contribution.kind == "thread" %}
-                            <li>
-                                <div class="thread-contribution">
-                                    <p>{{ contribution.contribution }}</p>
-                                    <span class="date-time" value="{{ contribution.created_at }}"></span>
-                                </div>
-                            </li>
-                        {% else %}
-                        <li>
-                            <div class="comment-contribution">
-                                <p>{{ contribution.contribution }}</p>
-                                <span class="parent-contribution">{{ contribution.parent.name }} by {{ contribution.parent.author }}</span>
-                                <span class="date-time" value="{{ contribution.created_at }}"></span>
-                            </div>
-                        </li>
-                        {% endif %}
-                    {% empty %}
-                        <p>You don't have any contributions</p>
-                    {% endfor %}
-                </ol>
-                <button class="reload-button" onclick="this.blur();">
+        <div  class="grade-section grading-pop-up" title="Enter Grade">
+            <div class="pop-up-content">
+                <div class="contributions-section">
+                    <p>Contributions</p>
+                    <ol class="list-contribution"></ol>
+                </div>
+                <form>
+                  <fieldset>
+                    <label for="grade">Grade</label>
+                    <input type="text" name="grade" id="grade" placeholder="Enter the grade ...">
+                    <label for="comment">Comment</label>
+                    <textarea name="comment" id="comment"></textarea>
+                    <input id="submit-button" type="button" value="Submit" >
+                  </fieldset>
+                </form>
+                <button class="reload-button" onclick="this.blur();" title="Reload">
                     <span class="fa fa-refresh"></span>
                 </button>
             </div>
+        </div>
+    {% else %}
+        <div class="student-section">
             <div class="feedback-section">
                 {% if score %}
                     <p>{{ grading_message }}</p>
-                    <p>Your score is: {{ score }}</p>
+                    <p>Your score is: {{ score }}/{{ max_score }}</p>
                 {% else %}
                     <p>{{ grading_message }}</p>
                 {% endif %}
             </div>
         </div>
     {% endif %}
-</div>
-
-<div id="dialog-form" title="Enter Grade">
-  <form>
-    <fieldset>
-      <label for="grade">Grade</label>
-      <input type="text" name="grade" id="grade" placeholder="Enter the grade ..." class="text ui-widget-content ui-corner-all">
-      <label for="comment">Comment</label>
-      <textarea name="comment" id="comment" class="text ui-widget-content ui-corner-all"></textarea>
-      <!-- Allow form submission with keyboard without duplicating the dialog button -->
-      <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
-    </fieldset>
-  </form>
 </div>

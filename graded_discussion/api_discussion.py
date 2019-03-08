@@ -18,6 +18,7 @@ class ApiDiscussion(ApiInterface):
 
         self.cache_key = key
         self.cache_block = cache.get(key, {})
+        self.server_url = server_url
         self.api_path = "{}/api/discussion/v1/course_topics/{}".format(server_url, course)
 
         headers = self.cache_block.get("headers")
@@ -43,18 +44,14 @@ class ApiDiscussion(ApiInterface):
         """
         This returns all the contributions for a given user as a list
         """
-        topics = self._fetch_topics()
+        topics = self._fetch_topics(topic_id)
         threads = []
         comments = []
         contributions = []
         thread_dict = {}
 
-        if topic_id:
-            topic = self._find_topic_by_id(topics, topic_id)
-            threads = self._fetch_content(topic.get("thread_list_url"))
-        else:
-            for topic in topics:
-                threads += self._fetch_content(topic.get("thread_list_url"))
+        for topic in topics:
+            threads += self._fetch_content(topic.get("thread_list_url"))
 
         for thread in threads:
             thread_dict.update({thread["id"]: {"name": thread["title"], "author": thread["author"]}})
@@ -68,6 +65,11 @@ class ApiDiscussion(ApiInterface):
                 })
 
             comments += self._fetch_content(thread["comment_list_url"])
+
+        for comment in comments:
+            if comment.get("child_count") > 0:
+                url = "{}/api/discussion/v1/comments/{}".format(self.server_url, comment["id"])
+                comments += self._fetch_content(url)
 
         contributions += [{
             "author": user,
@@ -84,6 +86,12 @@ class ApiDiscussion(ApiInterface):
         """
         topics = self._fetch_topics()
         return self._get_names(topics)
+
+    def get_topic_id(self, name):
+        """
+        """
+        topics = self._fetch_topics()
+        return self._get_id(topics, name)
 
     def _fetch_content(self, content_url=None):
         """
@@ -107,20 +115,23 @@ class ApiDiscussion(ApiInterface):
 
         return content
 
-    def _fetch_topics(self):
+    def _fetch_topics(self, topic_id=None):
         """
         """
-        topics = self.cache_block.get("topics")
+        key = "{}-{}".format("topics", topic_id)
+        topics = self.cache_block.get(key)
 
         if topics:
             return topics
 
-        response = self._handle_response(self.session.get(self.api_path))
+        payload = {"topic_id": topic_id} if topic_id else None
+
+        response = self._handle_response(self.session.get(self.api_path, params=payload))
 
         if response:
             topics = response.get("courseware_topics")
             topics += response.get("non_courseware_topics")
-            self.cache_block["topics"] = topics
+            self.cache_block[key] = topics
             cache.set(self.cache_key, self.cache_block, CACHE_TIME)
             return topics
 
@@ -138,6 +149,21 @@ class ApiDiscussion(ApiInterface):
                 result += self._get_names(children)
 
         return result
+
+    def _get_id(self, topics, name):
+        """
+        """
+        for topic in topics:
+            children = topic.get("children", [])
+            if len(children) == 0 and topic.get("name") == name:
+                return topic.get("id")
+            elif len(children) > 0:
+                topic_id = self._get_id(children, name)
+
+                if topic_id:
+                    return topic_id
+
+        return None
 
     def _handle_response(self, response):
         """

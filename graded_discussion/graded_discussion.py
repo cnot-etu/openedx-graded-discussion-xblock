@@ -1,6 +1,9 @@
 """TO-DO: Write a description of what this XBlock is."""
 
+import json
 import pkg_resources
+
+from dateutil.parser import parse
 
 from api_discussion import ApiDiscussion
 from api_teams import ApiTeams
@@ -94,7 +97,7 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
     discussion_topic = String(
         display_name=_("Discussion Topic"),
         default=None,
-        scope=Scope.content,
+        scope=Scope.settings,
         help=_("Select the topic that you want to use for grading."),
         values_provider=lambda self: self.get_discussion_topics(),
     )
@@ -147,12 +150,18 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
         comment = request.params.get('comment')
 
         if not score:
-            return Response(json_body={"error": "Enter a valid grade"})
+            return Response(
+                json_body={"error": "Enter a valid grade"},
+                status_code=400,
+            )
 
         try:
             score = int(score)
         except ValueError:
-            return Response(json_body={"error": "Enter a valid grade"})
+            return Response(
+                json_body={"error": "Enter a valid grade"},
+                status_code=400,
+            )
 
         submission_id = self.get_submission_id(user)
 
@@ -194,7 +203,8 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
                 image_url=get_profile_image_urls_for_user(user)["full"],
                 last_post=self._get_last_date_on_post(user.username),
                 cohort_id=get_cohort_id(user, self.course_id),
-                team=self.api_teams.get_user_team(unicode(self.course_id), user.username)
+                team=self.api_teams.get_user_team(unicode(self.course_id), user.username),
+                contributions=json.dumps(self._get_contributions(user.username)),
             )
             for user in users if not user.is_staff and user not in graded_students
         ]
@@ -221,13 +231,14 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
         """
         return self.points
 
-    @XBlock.handler
-    def refresh_data(self, request, suffix=""):
+    @XBlock.json_handler
+    def get_contributions(self, data, suffix=""):
         """
         """
-        username = request.GET.get("user")
+        require(self.is_course_staff())
+        users = data.get("users")
         cache.delete(self.location)
-        contributions = self._get_contributions(username) if username else self._get_contributions(self.username)
+        contributions = {user: json.dumps(self._get_contributions(user)) for user in users}
         return Response(json=contributions)
 
     def resource_string(self, path):
@@ -256,8 +267,9 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
         when viewing courses.
         """
         frag = Fragment(LOADER.render_django_template("static/html/graded_discussion.html", self._get_context()))
-        frag.add_css_url("//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css")
+        frag.add_css_url("https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.min.css")
         frag.add_css(self.resource_string("static/css/graded_discussion.css"))
+        frag.add_javascript_url("https://cdnjs.cloudflare.com/ajax/libs/jquery-modal/0.9.1/jquery.modal.min.js")
         frag.add_javascript(self.resource_string("static/js/src/graded_discussion.js"))
         frag.initialize_js('GradedDiscussionXBlock')
         return frag
@@ -270,6 +282,12 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
         user = self.runtime.service(self, 'user').get_current_user()
         return user.opt_attrs['edx-platform.username']
 
+    @cached_property
+    def topic_id(self):
+        """
+        """
+        return self.api_discussion.get_topic_id(self.discussion_topic)
+
     def validate_field_data(self, validation, data):
         """
         This method validates the data from studio before it is saved
@@ -279,6 +297,29 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
 
         if start_date and end_date and end_date <= start_date:
             validation.add(ValidationMessage(ValidationMessage.ERROR, u"The start date must be before the end date"))
+
+    def _filter_by_date(self, contributions):
+        """
+        """
+        if self.start_date and self.end_date:
+            return [
+                contribution
+                for contribution in contributions
+                if parse(contribution["created_at"]) >= self.start_date and parse(contribution["created_at"]) <= self.end_date
+            ]
+        elif self.start_date:
+            return [
+                contribution
+                for contribution in contributions
+                if parse(contribution["created_at"]) >= self.start_date
+            ]
+        elif self.end_date:
+            return [
+                contribution
+                for contribution in contributions
+                if parse(contribution["created_at"]) <= self.end_date
+            ]
+        return contributions
 
     def _get_context(self):
         """
@@ -296,10 +337,9 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
         comment = self.get_comment()
         return dict(
             user_is_staff=False,
-            contributions=self._get_contributions(self.username),
             grading_message=comment if comment else self.grading_message,
-            reload_url=self.runtime.local_resource_url(self, 'public/img/reload-icon.png'),
             score=self.score,
+            max_score=self.points
         )
 
     def _get_contributions(self, username):
@@ -312,10 +352,7 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
         if contributions:
             return contributions
 
-        if self.discussion_topic:
-            contributions = self.api_discussion.get_user_contributions(username, self.discussion_topic)
-        else:
-            contributions = self.api_discussion.get_user_contributions(username)
+        contributions = self._filter_by_date(self.api_discussion.get_user_contributions(username, self.topic_id))
 
         cache_block[username] = contributions
         cache.set(self.location, cache_block, 3600)
@@ -344,6 +381,11 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
             return contributions[0].get("created_at")
         except IndexError:
             return ""
+
+    def _get_topic_id(self, name):
+        """
+        """
+        return self.api_discussion.get_topic_id(name)
 
     # TO-DO: change this to create the scenarios you'd like to see in the
     # workbench while developing your XBlock.

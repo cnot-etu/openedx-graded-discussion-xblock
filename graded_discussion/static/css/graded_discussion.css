@@ -7,38 +7,57 @@
     padding: 15px;
 }
 
-.graded_discussion_block .contributions-section ol {
-    list-style: none;
-    padding: 0 40px 0 40px;
-}
-
 .graded_discussion_block .feedback-section {
     padding-left: 30px;
 }
 
-.graded_discussion_block .contributions-section p{
+.contributions-section ol {
+    list-style: none;
+    padding: 0 40px 0 40px;
+}
+
+.contributions-section p{
     padding-left: 30px;
     font-weight: bold;
 }
 
-.graded_discussion_block .contributions-section li{
+.contributions-section li{
     margin-bottom: 1em;
 }
 
-.graded_discussion_block .contributions-section li p {
-    margin: 0;
-    padding-left: 0px;
-    font-weight: unset;
-}
-
-.graded_discussion_block .contributions-section .reload-button {
+.contributions-section .reload-button {
     float: right;
     border-radius: 8px;
     border: 1px solid #cecece;
     cursor: pointer;
 }
 
-.graded_discussion_block .contributions-section .date-time {
+.contributions-section .parent-contribution {
+  float: left;
+  font-size:0.7em;
+  font-style: italic;
+  padding-top: 1em;
+}
+
+.contributions-section .date-time:before {
+  content: "Posted on: ";
+}
+
+.contributions-section .thread-contribution {
+    border: 1px solid #bb0a0a;
+    padding: 0.7em 0.5em 0.5em 1.2em;
+    border-radius: 10px;
+    box-shadow: 5px 6px 8px 0px rgba(0, 0, 0, 0.2);
+}
+
+.contributions-section .comment-contribution {
+    border: 1px solid #0d400d;
+    padding: 0.7em 0.5em 0.5em 1.2em;
+    border-radius: 10px;
+    box-shadow: 5px 6px 8px 0px rgba(0, 0, 0, 0.2);
+}
+
+.contributions-section .date-time {
   font-size:0.7em;
   display:block;
   font-style: italic;
@@ -46,29 +65,10 @@
   padding-top: 1em;
 }
 
-.graded_discussion_block .contributions-section .parent-contribution {
-  float: left;
-  font-size:0.7em;
-  font-style: italic;
-  padding-top: 1em;
-}
-
-.graded_discussion_block .contributions-section .date-time:before {
-  content: "Posted on: ";
-}
-
-.graded_discussion_block .contributions-section .thread-contribution {
-    border: 1px solid #bb0a0a;
-    padding: 0.7em 0.5em 0.5em 1.2em;
-    border-radius: 10px;
-    box-shadow: 5px 6px 8px 0px rgba(0, 0, 0, 0.2);
-}
-
-.graded_discussion_block .contributions-section .comment-contribution {
-    border: 1px solid #0d400d;
-    padding: 0.7em 0.5em 0.5em 1.2em;
-    border-radius: 10px;
-    box-shadow: 5px 6px 8px 0px rgba(0, 0, 0, 0.2);
+.graded_discussion_block .contributions-section li p {
+    margin: 0;
+    padding-left: 0px;
+    font-weight: unset;
 }
 
 .graded_discussion_block .staff-section{
@@ -213,19 +213,62 @@
     margin: 0 0 0 0;
 }
 
-#dialog-form form{
+.grade-section.grading-pop-up{
+  display: none;
+}
+
+.grade-section.grading-pop-up.modal{
+  left: 0;
+  max-width: 90%;
+  width:90%;
+  height:80%;
+}
+
+.grade-section.grading-pop-up.modal .pop-up-content{
+  display: flex;
+  justify-content: space-evenly;
+  height: 100%
+}
+.grading-pop-up form{
+  height: 50%;
+  width: 25%;
+  margin: 20px;
+}
+
+.grading-pop-up form fieldset{
   height: 100%;
 }
 
-#dialog-form form fieldset{
-  height: 100%;
-}
-
-#dialog-form form textarea{
+.grading-pop-up form textarea{
   height: 65%;
   width: 100%;
 }
 
-.ui-dialog-titlebar .ui-button .ui-button-icon-primary {
-    position: static;
+
+.jquery-modal.blocker.current{
+  z-index: 1000;
+}
+
+.pop-up-content .contributions-section li p {
+    margin: 0;
+    padding-left: 0px;
+    font-weight: unset;
+}
+
+.pop-up-content .contributions-section {
+    overflow-y: scroll;
+    flex: 1;
+    height: 100%;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+
+.pop-up-content #submit-button{
+    margin-top: 10px;
+}
+
+.pop-up-content .reload-button{
+    height: 30px
+    height: 30px;
+    align-self: flex-end;
 }

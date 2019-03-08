@@ -3,7 +3,6 @@ function GradedDiscussionXBlock(runtime, element) {
 
     function renderContributions(data){
         $(".list-contribution").empty();
-
         data.forEach(function(entry) {
             if ( entry.kind === "thread"){
                 $(".list-contribution").append(createThreadElement(entry.contribution, entry.created_at));
@@ -47,7 +46,7 @@ function GradedDiscussionXBlock(runtime, element) {
     }
 
     function updateDateTime(){
-        $(".graded_discussion_block .date-time").each(function() {
+        $(".date-time").each(function() {
             var value = $(this).attr("value");
             if (value==""){
                 $(this).text("This user has no contributions");
@@ -85,62 +84,69 @@ function GradedDiscussionXBlock(runtime, element) {
         return (firstDate < secondDate) ? 1 : -1;
     }
 
-    function getContributions(username){
+    function getContributions(users){
         $.ajax({
-            type: "GET",
+            type: "POST",
             url: reloadPage,
-            data: {"user": username},
-            success: renderContributions
+            data: JSON.stringify({"users": users}),
+            success: function(data){
+                $(".graded_discussion_block .users-list li").each(function(){
+                    var username = $(this).attr("username");
+                    $(this).attr("contributions", data[username]);
+                    if ($(this).hasClass("active")) {
+                        renderContributions(JSON.parse($(this).attr("contributions")));
+                    }
+                })
+
+            },
         });
     }
 
+    function submit(){
+        var score = $("#grade").val();
+        var comment = $("#comment").val();
+        var username = $(".graded_discussion_block .users-list .active").attr("username");
+        if (username == null ){
+            $.modal.close();
+            alert("Select a user");
+        } else {
+            $.ajax({
+                type: "GET",
+                url: enterGrade,
+                data: {"user": username, "score": score, "comment": comment},
+                success: function (){
+                    $(".active").remove();
+                    $(".grading-section .grade-section").hide();
+                    $(".list-contribution").empty();
+                    $.modal.close();
+                },
+            }).fail(function(data){
+                alert(data.responseJSON.error);
+            })
+        }
+        $("#grade").val("");
+        $("#comment").val("");
+    }
 
     $(function ($) {
         /* Here's where you'd do things on page load. */
     });
 
-    var reloadPage = runtime.handlerUrl(element, "refresh_data");
+    var reloadPage = runtime.handlerUrl(element, "get_contributions");
     var enterGrade = runtime.handlerUrl(element, "enter_grade");
-
-    var grade = $("#grade");
-    var comment = $("#comment");
-    var allFields = $( [] ).add(grade).add(comment);
-
-    var dialog = $( "#dialog-form" ).dialog({
-      autoOpen: false,
-      height: 400,
-      width: 350,
-      modal: true,
-      buttons: {
-        "Submit": function(){
-            var score = $("#grade").val();
-            var comment = $("#comment").val();
-            var username = $(".graded_discussion_block .users-list .active").attr("username");
-            if (username == null ){
-                dialog.dialog("close");
-                alert("Select a user");
-            } else {
-                $.ajax({
-                    type: "GET",
-                    url: enterGrade,
-                    data: {"user": username, "score": score, "comment": comment},
-                });
-            }
-
-        },
-        Cancel: function() {
-          dialog.dialog("close");
-        }
-      },
-      close: function() {
-        allFields.removeClass("ui-state-error");
-      }
-    });
 
     updateDateTime();
 
     $(".student-section .reload-button").click(function(){
         getContributions(null);
+    })
+
+    $(".pop-up-content .reload-button").click(function(){
+        var users = [];
+        $(".graded_discussion_block .users-list li").each(function(){
+            users.push($(this).attr("username"));
+        })
+        getContributions(users);
     })
 
     $(".graded_discussion_block .oldest").click(function(){
@@ -153,13 +159,20 @@ function GradedDiscussionXBlock(runtime, element) {
 
     $(".graded_discussion_block .users-list li").click(function(){
         var username = $(this).attr("username");
+        var contributions = JSON.parse($(this).attr("contributions"));
         $("li").removeClass("active");
         $(this).addClass("active");
-        getContributions(username);
+        renderContributions(contributions);
     });
 
     $(".graded_discussion_block #grade-button").click(function(){
-        dialog.dialog( "open" );
+        $(".grading-pop-up").modal({
+          fadeDuration: 100
+        });
+    });
+
+    $(".grading-pop-up #submit-button").click(function(){
+        submit();
     });
 
     $(".graded_discussion_block .staff-section .menu-icon").click(function(){
