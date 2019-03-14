@@ -219,7 +219,7 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
         return [
             dict(
                 username=user.username,
-                image_url=get_profile_image_urls_for_user(user)["full"],
+                image_url=self._get_image_url(user),
                 last_post=self._get_last_date_on_post(user.username),
                 cohort_id=get_cohort_id(user, self.course_id),
                 team=self.api_teams.get_user_team(unicode(self.course_id), user.username),
@@ -393,6 +393,18 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
             if self.get_score(user):
                 result.append(user)
         return result
+
+    def _get_image_url(self, user):
+        """
+        """
+        profile_image_url = get_profile_image_urls_for_user(user)["full"]
+
+        if profile_image_url.startswith("http"):
+            return profile_image_url
+
+        base_url = settings.LMS_ROOT_URL
+        image_url = "{}{}".format(base_url, profile_image_url)
+        return image_url
 
     def _get_last_date_on_post(self, username):
         """
