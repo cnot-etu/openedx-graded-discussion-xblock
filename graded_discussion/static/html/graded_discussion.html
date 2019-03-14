@@ -1,78 +1,73 @@
 <div class="graded_discussion_block">
     {% if user_is_staff %}
-        <div class="staff-section">
-            <div class="menu-icon"><span class="fa fa-bars"></span></div>
-            <aside class="filters">
-                <div class="close-button"><span class="icon fa fa-close" aria-hidden="true"></span></div>
-                <div class="search">
-                    <span class="icon fa fa-search" aria-hidden="true"></span>
-                    <input class="search-input" type="text" placeholder="Search for names..">
-                </div>
-                <div class="sort-by-date">
-                    <p>Sorted by:</p>
-                    <ul>
-                        <li class="oldest"><label>Oldest</label></li>
-                        <li class="newest"><label>Newest</label></li>
-                    </ul>
-                </div>
-                <div class="teams-filter">
-                    {% if teams %}
-                        <p>Teams:</p>
-                        <ul>
-                            {% for team in teams %}
-                                <li><input type="checkbox" id="{{team.id}}"><label for="{{team.id}}">{{ team.name }}</label></li>
-                            {% endfor %}
-                        </ul>
-                    {% endif %}
-                </div>
-                <div class="cohort-filter">
-                    {% if cohorts %}
-                        <p>Cohorts:</p>
-                        <ul>
-                            {% for id, cohort in cohorts.items %}
-                                <li><input type="checkbox" id="{{id}}"><label for="{{id}}">{{ cohort }}</label></li>
-                            {% endfor %}
-                        </ul>
-                    {% endif %}
-                </div>
-            </aside>
-            <div class="info-section">
-                <div class="rubric-section">
-                    <p>{{rubric|safe }}</p>
-                </div>
-                <div class="student-list-section">
-                    <ol class="users-list">
-                        {% for user in users %}
-                            <li class="item" cohort-id="{{ user.cohort_id }}" team-id="{{ user.team.id }}" username="{{ user.username }}" contributions="{{ user.contributions }}">
-                                <img src="{{user.image_url}}">
-                                <div class="user-info">
-                                    <label>{{ user.username }}</label>
-                                    <span class="date-time" value="{{ user.last_post }}"></span>
-                                </div>
-                            </li>
-                        {% empty %}
-                            <p>No available users to grade</p>
-                        {% endfor %}
-                    </ol>
-                </div>
+        <div class="grade-section">
+            <div class="staff-message-section">
+                <p>{{ grading_message }}</p>
             </div>
-
-            <div class="grading-section">
-                <div class="contributions-section">
-                    <p>Contributions</p>
-                    <ol class="list-contribution"></ol>
-                </div>
-                <div class="grade-section">
-                    <input id="grade-button" type="button" name="grade" value="Enter Grade">
-                </div>
-            </div>
+            <input id="grade-button" type="button" name="grade" value="Enter Grade">
         </div>
         <div  class="grade-section grading-pop-up" title="Enter Grade">
-            <div class="pop-up-content">
+            <div class="staff-section">
+                <div class="menu-icon"><span class="fa fa-bars"></span></div>
+                <aside class="filters">
+                    <div class="close-button"><span class="icon fa fa-close" aria-hidden="true"></span></div>
+                    <div class="search">
+                        <span class="icon fa fa-search" aria-hidden="true"></span>
+                        <input class="search-input" type="text" placeholder="Search for names..">
+                    </div>
+                    <div class="sort-by-date">
+                        <p>Sorted by:</p>
+                        <ul>
+                            <li class="oldest"><label>Oldest</label></li>
+                            <li class="newest"><label>Newest</label></li>
+                        </ul>
+                    </div>
+                    <div class="teams-filter">
+                        {% if teams %}
+                            <p>Teams:</p>
+                            <ul>
+                                {% for team in teams %}
+                                    <li><input type="checkbox" id="{{team.id}}"><label for="{{team.id}}">{{ team.name }}</label></li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                    <div class="cohort-filter">
+                        {% if cohorts %}
+                            <p>Cohorts:</p>
+                            <ul>
+                                {% for id, cohort in cohorts.items %}
+                                    <li><input type="checkbox" id="{{id}}"><label for="{{id}}">{{ cohort }}</label></li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                </aside>
+                <div class="info-section">
+                    <div class="rubric-section">
+                        <p>{{rubric|safe }}</p>
+                    </div>
+                    <div class="student-list-section">
+                        <ol class="users-list">
+                            {% for user in users %}
+                                <li class="item" cohort-id="{{ user.cohort_id }}" team-id="{{ user.team.id }}" username="{{ user.username }}" contributions="{{ user.contributions }}">
+                                    <img src="{{user.image_url}}">
+                                    <div class="user-info">
+                                        <label>{{ user.username }}</label>
+                                        <span class="date-time" value="{{ user.last_post }}"></span>
+                                    </div>
+                                </li>
+                            {% empty %}
+                                <p>No available users to grade</p>
+                            {% endfor %}
+                        </ol>
+                    </div>
+                </div>
                 <div class="contributions-section">
                     <p>Contributions</p>
                     <ol class="list-contribution"></ol>
                 </div>
+
                 <form>
                   <fieldset>
                     <label for="grade">Grade</label>

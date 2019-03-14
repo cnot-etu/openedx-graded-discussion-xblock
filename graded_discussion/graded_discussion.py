@@ -9,6 +9,7 @@ from api_discussion import ApiDiscussion
 from api_teams import ApiTeams
 
 from courseware.courses import get_course_by_id
+from courseware.models import StudentModule
 from student.models import (
     CourseEnrollmentManager,
     user_by_anonymous_id,
@@ -96,7 +97,7 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
 
     discussion_topic = String(
         display_name=_("Discussion Topic"),
-        default=None,
+        default="All topics",
         scope=Scope.settings,
         help=_("Select the topic that you want to use for grading."),
         values_provider=lambda self: self.get_discussion_topics(),
@@ -169,6 +170,8 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
 
         submissions_api.set_score(submission['uuid'], score, self.max_score())
 
+        self.get_or_create_student_module(user, score, comment)
+
         return Response(json_body={"success": "success"})
 
     def get_comment(self):
@@ -181,7 +184,23 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
     def get_discussion_topics(self):
         """
         """
-        return self.api_discussion.get_topics_names()
+        topics = self.api_discussion.get_topics_names()
+        topics.append("All topics")
+        return topics
+
+    def get_or_create_student_module(self, user, score, comment):
+        """
+        """
+        state = {"score": score, "comment": comment}
+        student_module, created = StudentModule.objects.get_or_create(
+            course_id=self.course_id,
+            module_state_key=self.location,
+            student=user,
+            defaults={
+                'state': json.dumps(state),
+            }
+        )
+        return student_module
 
     def get_score(self, user):
         """
@@ -286,6 +305,8 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
     def topic_id(self):
         """
         """
+        if self.discussion_topic == "All topics":
+            return None
         return self.api_discussion.get_topic_id(self.discussion_topic)
 
     def validate_field_data(self, validation, data):
@@ -332,12 +353,13 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
                 reload_url=self.runtime.local_resource_url(self, 'public/img/reload-icon.png'),
                 cohorts=get_cohort_names(get_course_by_id(self.course_id)),
                 teams=self.api_teams.get_course_teams(unicode(self.course_id)),
+                grading_message=self.grading_message,
             )
 
         comment = self.get_comment()
         return dict(
             user_is_staff=False,
-            grading_message=comment if comment else self.grading_message,
+            grading_message=comment if comment and self.score else self.grading_message,
             score=self.score,
             max_score=self.points
         )

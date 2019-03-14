@@ -5,9 +5,9 @@ function GradedDiscussionXBlock(runtime, element) {
         $(".list-contribution").empty();
         data.forEach(function(entry) {
             if ( entry.kind === "thread"){
-                $(".list-contribution").append(createThreadElement(entry.contribution, entry.created_at));
+                $(".list-contribution").append(createContributionElement("thread", entry.contribution, entry.parent, entry.created_at));
             } else {
-                $(".list-contribution").append(createCommentElement(entry.contribution, entry.parent, entry.created_at));
+                $(".list-contribution").append(createContributionElement("comment", entry.contribution, entry.parent, entry.created_at));
             }
         });
         updateDateTime();
@@ -15,23 +15,9 @@ function GradedDiscussionXBlock(runtime, element) {
     };
 
 
-    function createThreadElement(contribution, createdAt){
+    function createContributionElement(kind, contribution, parent, createdAt){
         var element = $("<li></li>");
-        var div = $('<div class="thread-contribution"></div>');
-        var contribution = $('<p>'+contribution+'</p>');
-        var date = $('<span class="date-time" value="'+createdAt+'"></span>');
-
-        contribution.appendTo(div);
-        date.appendTo(div);
-        div.appendTo(element);
-
-        return element
-
-    }
-
-    function createCommentElement(contribution, parent, createdAt){
-        var element = $("<li></li>");
-        var div = $('<div class="comment-contribution"></div>');
+        var div = $('<div class="'+kind+'-contribution"></div>');
         var contribution = $('<p>'+contribution+'</p>');
         var parent = $('<span class="parent-contribution">'+parent.name+' by '+parent.author+'</span>');
         var date = $('<span class="date-time" value="'+createdAt+'"></span>');
@@ -90,7 +76,7 @@ function GradedDiscussionXBlock(runtime, element) {
             url: reloadPage,
             data: JSON.stringify({"users": users}),
             success: function(data){
-                $(".graded_discussion_block .users-list li").each(function(){
+                $(".grading-pop-up .users-list li").each(function(){
                     var username = $(this).attr("username");
                     $(this).attr("contributions", data[username]);
                     if ($(this).hasClass("active")) {
@@ -105,9 +91,8 @@ function GradedDiscussionXBlock(runtime, element) {
     function submit(){
         var score = $("#grade").val();
         var comment = $("#comment").val();
-        var username = $(".graded_discussion_block .users-list .active").attr("username");
+        var username = $(".grading-pop-up .users-list .active").attr("username");
         if (username == null ){
-            $.modal.close();
             alert("Select a user");
         } else {
             $.ajax({
@@ -116,9 +101,10 @@ function GradedDiscussionXBlock(runtime, element) {
                 data: {"user": username, "score": score, "comment": comment},
                 success: function (){
                     $(".active").remove();
-                    $(".grading-section .grade-section").hide();
                     $(".list-contribution").empty();
-                    $.modal.close();
+                    if($(".users-list li").length ==0){
+                        $(".staff-section .users-list").append("<p>No available users to grade</p>");
+                    }
                 },
             }).fail(function(data){
                 alert(data.responseJSON.error);
@@ -137,27 +123,23 @@ function GradedDiscussionXBlock(runtime, element) {
 
     updateDateTime();
 
-    $(".student-section .reload-button").click(function(){
-        getContributions(null);
-    })
-
-    $(".pop-up-content .reload-button").click(function(){
+    $(".grading-pop-up .reload-button").click(function(){
         var users = [];
-        $(".graded_discussion_block .users-list li").each(function(){
+        $(".grading-pop-up .users-list li").each(function(){
             users.push($(this).attr("username"));
         })
         getContributions(users);
     })
 
-    $(".graded_discussion_block .oldest").click(function(){
+    $(".grading-pop-up .oldest").click(function(){
         $(".users-list li").sort(sortByOldest).appendTo('.users-list');
     });
 
-    $(".graded_discussion_block .newest").click(function(){
+    $(".grading-pop-up .newest").click(function(){
         $(".users-list li").sort(sortByNewest).appendTo('.users-list');
     });
 
-    $(".graded_discussion_block .users-list li").click(function(){
+    $(".grading-pop-up .users-list li").click(function(){
         var username = $(this).attr("username");
         var contributions = JSON.parse($(this).attr("contributions"));
         $("li").removeClass("active");
@@ -175,17 +157,19 @@ function GradedDiscussionXBlock(runtime, element) {
         submit();
     });
 
-    $(".graded_discussion_block .staff-section .menu-icon").click(function(){
-        $(".graded_discussion_block .staff-section .filters").fadeIn("slow");
+    $(".grading-pop-up .staff-section .menu-icon").click(function(){
+        $(".grading-pop-up .staff-section .filters").fadeIn("slow");
+        $(".grading-pop-up .staff-section form").hide();
         $(this).hide();
     });
 
-    $(".graded_discussion_block .staff-section .filters .close-button").click(function(){
-        $(".graded_discussion_block .staff-section .filters").hide();
-        $(".graded_discussion_block .staff-section .menu-icon").fadeIn("slow");
+    $(".grading-pop-up .staff-section .filters .close-button").click(function(){
+        $(".grading-pop-up .staff-section .filters").hide();
+        $(".grading-pop-up .staff-section .menu-icon").fadeIn("slow");
+        $(".grading-pop-up .staff-section form").fadeIn("slow");
     });
 
-    $(".graded_discussion_block .search-input").on("keyup", function() {
+    $(".grading-pop-up .search-input").on("keyup", function() {
         var value = $(this).val().toLowerCase();
         $(".student-list-section .item").filter(function() {
           $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
@@ -194,9 +178,9 @@ function GradedDiscussionXBlock(runtime, element) {
 
     $(".users-list li").sort(sortByOldest).appendTo('.users-list');
 
-    $('.graded_discussion_block li :checkbox').change(function() {
+    $('.grading-pop-up li :checkbox').change(function() {
         var validIds = [];
-        $('.graded_discussion_block li :checkbox:checked').each(function() {
+        $('.grading-pop-up li :checkbox:checked').each(function() {
             validIds.push($(this).attr("id"));
         });
         if (validIds.length == 0) {

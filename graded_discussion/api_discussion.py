@@ -61,6 +61,7 @@ class ApiDiscussion(ApiInterface):
                     "author": user,
                     "contribution": thread["raw_body"],
                     "created_at": thread["created_at"],
+                    "parent": {"name": thread["title"], "author": thread["author"]},
                     "kind": "thread",
                 })
 
