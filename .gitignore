@@ -1,0 +1,5 @@
+*.pyc
+/graded_discussion_xblock.egg-info/
+/venv/
+/.tox/
+*.coverage

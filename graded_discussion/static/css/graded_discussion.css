@@ -1,0 +1,281 @@
+/* CSS for GradedDiscussionXBlock */
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css");
+
+.graded_discussion_block{
+    border: 1px solid #cecece;
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.graded_discussion_block .feedback-section {
+    padding-left: 30px;
+}
+
+.contributions-section ol {
+    list-style: none;
+    padding: 0 40px 0 40px;
+}
+
+.contributions-section p{
+    padding-left: 30px;
+    font-weight: bold;
+}
+
+.contributions-section li{
+    margin-bottom: 0.5em;
+}
+
+.contributions-section .reload-button {
+    float: right;
+    border-radius: 8px;
+    border: 1px solid #cecece;
+    cursor: pointer;
+}
+
+.contributions-section .parent-contribution {
+  float: left;
+  font-size:0.7em;
+  font-style: italic;
+  padding-top: 1em;
+}
+
+.contributions-section .date-time:before {
+  content: "Posted on: ";
+}
+
+.contributions-section .thread-contribution {
+    border: 1px solid #bb0a0a;
+    padding: 0.4em 0.4em 0.4em 1.2em;
+    border-radius: 10px;
+    box-shadow: 5px 6px 8px 0px rgba(0, 0, 0, 0.2);
+}
+
+.contributions-section .comment-contribution {
+    border: 1px solid #0f800d;
+    padding: 0.4em 0.4em 0.4em 1.2em;
+    border-radius: 10px;
+    box-shadow: 5px 6px 8px 0px rgba(0, 0, 0, 0.2);
+}
+
+.contributions-section .date-time {
+  font-size:0.7em;
+  display:block;
+  font-style: italic;
+  text-align:right;
+  padding-top: 1em;
+}
+
+.grading-pop-up .staff-section{
+    display: flex;
+    justify-content: flex-start;
+    height: 100%;
+}
+
+.grading-pop-up .staff-section .student-list-section ol{
+    list-style: none;
+    padding: 0 0 0 0;
+}
+
+.grading-pop-up .staff-section .filters .sort-by-date ul{
+    list-style: none;
+    margin: 2px 0 3px 0;
+    padding-left: 20px;
+}
+
+.grading-pop-up .staff-section .filters .teams-filter ul{
+    list-style: none;
+    margin: 2px 0 3px 0;
+    padding-left: 20px;
+}
+
+.grading-pop-up .staff-section .filters label{
+    font-size:0.8em;
+    font-style: italic;
+    color: #0075b4
+}
+
+.grading-pop-up .staff-section .filters .cohort-filter ul{
+    list-style: none;
+    margin: 2px 0 3px 0;
+    padding-left: 20px;
+}
+
+.grading-pop-up .staff-section .student-list-section li{
+    border: 1px solid #4d800d;
+    padding: 0.7em 0.5em 0.5em 0.5em;
+    border-radius: 10px;
+    margin-bottom: 1em;
+    cursor: pointer;
+}
+
+.grading-pop-up .staff-section .student-list-section .active{
+    box-shadow: 5px 6px 8px 0px rgba(0, 0, 0, 0.2);}
+
+.grading-pop-up .staff-section .student-list-section img{
+    width: 40px;
+}
+
+.grading-pop-up .staff-section .student-list-section .user-info{
+    display: inline-block;
+    vertical-align: middle;
+    padding-left: 1em;
+}
+
+.student-list-section .date-time {
+  font-size:0.6em;
+  display:block;
+  font-style: italic;
+  text-align:right;
+  padding-top: 1em;
+  text-align: end;
+}
+
+.student-list-section .date-time:before{
+  content: "Last post on: ";
+}
+
+.grading-pop-up .search .search-input {
+    text-indent: 32px;
+}
+
+.grading-pop-up .search .fa-search {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+}
+
+.grading-pop-up .search {
+  position: relative;
+  color: #aaa;
+  font-size: 16px;
+  margin-bottom: 1em;
+}
+
+.grading-pop-up .staff-section .rubric-section{
+    border: 1px solid #4d800d;
+    padding: 0.7em 0.7em 0.5em 0.7em;
+    border-radius: 10px;
+    margin-bottom: 2em;
+}
+
+.grading-pop-up .staff-section .filters input[type='checkbox'] {
+    display: none;
+}
+
+.grading-pop-up .staff-section .filters input:checked + label {
+    font-weight: bold;
+}
+
+.grading-pop-up .staff-section .filters {
+    display: none;
+    margin-right: 20px;
+    font-style: italic;
+    padding: 10px;
+    background: lightgrey;
+    border-radius: 16px;
+    box-shadow: 2px 5px 8px 0px rgba(0, 0, 0, 0.5);
+}
+
+.grading-pop-up .staff-section .filters .close-button{
+    display: flex;
+    color: #aaa;
+    justify-content: flex-end;
+    padding-bottom: 10px;
+}
+
+.grading-pop-up .staff-section .menu-icon {
+    margin-right: 10px;
+}
+
+.grading-pop-up .staff-section .info-section{
+    margin-right: 10px;
+    max-width: 300px;
+    overflow-y: auto;
+}
+
+/*.grading-pop-up .staff-section .grading-section{
+    flex: 1;
+}
+
+.grading-pop-up .staff-section .grading-section .grade-section{
+    text-align: end;
+    display: none;
+}*/
+
+.grading-pop-up .staff-section .filters li{
+    margin: 0 0 1px 0;
+}
+
+.grading-pop-up .staff-section .filters p{
+    margin: 0 0 0 0;
+}
+
+.grade-section.grading-pop-up{
+  display: none;
+}
+
+.grade-section.grading-pop-up.modal{
+  left: 0;
+  max-width: 90%;
+  width:90%;
+  height:80%;
+}
+
+.grade-section.grading-pop-up.modal .grading-section{
+  display: flex;
+  justify-content: space-evenly;
+  height: 100%
+}
+.grading-pop-up form{
+  height: 50%;
+  width: 20%;
+  margin: 20px;
+}
+
+.grading-pop-up form fieldset{
+  height: 100%;
+}
+
+.grading-pop-up form textarea{
+  height: 65%;
+  width: 100%;
+}
+
+
+.jquery-modal.blocker.current{
+  z-index: 1000;
+}
+
+.contributions-section li p {
+    margin: 0;
+    padding-left: 0px;
+    font-weight: unset;
+}
+
+.contributions-section {
+    flex: 1;
+    box-sizing: border-box;
+    overflow-y: auto;
+    min-width: 40%;
+}
+
+.grading-pop-up .staff-section #submit-button{
+    margin-top: 10px;
+}
+
+.grading-pop-up .reload-button{
+    height: 30px;
+    align-self: flex-end;
+}
+
+.modal {
+  max-width: 90%
+}
+
+.graded_discussion_block .grade-section{
+    overflow: hidden;
+}
+
+.graded_discussion_block .grade-section #grade-button{
+    float: right;
+}
