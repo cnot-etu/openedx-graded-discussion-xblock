@@ -17,11 +17,11 @@ class ApiDiscussion(ApiInterface):
     def __init__(self, server_url, course, client_id, client_secret, key="api_discussion"):
 
         self.cache_key = key
-        self.cache_block = cache.get(key, {})
+        cache_block = cache.get(key, {})
         self.server_url = server_url
         self.api_path = "{}/api/discussion/v1/course_topics/{}".format(server_url, course)
 
-        headers = self.cache_block.get("headers")
+        headers = cache_block.get("headers")
 
         if not headers:
             oauth = OAuth2Session(client=BackendApplicationClient(client_id=client_id))
@@ -33,17 +33,23 @@ class ApiDiscussion(ApiInterface):
             )
 
             headers = {"Authorization": "{} {}".format("Bearer", token['access_token'])}
-            self.cache_block["headers"] = headers
-            cache.set(self.cache_key, self.cache_block, CACHE_TIME)
+            cache_block["headers"] = headers
+            cache.set(self.cache_key, cache_block, CACHE_TIME)
 
         session = requests.Session()
         session.headers.update(headers)
         self.session = session
 
-    def get_user_contributions(self, user, topic_id=None):
+    def get_contributions(self, topic_id=None):
         """
         This returns all the contributions for a given user as a list
         """
+        key = "{}-{}".format(self.cache_key, "contributions")
+        contributions = cache.get(key)
+
+        if contributions:
+            return contributions
+
         topics = self._fetch_topics(topic_id)
         threads = []
         comments = []
@@ -56,14 +62,13 @@ class ApiDiscussion(ApiInterface):
         for thread in threads:
             thread_dict.update({thread["id"]: {"name": thread["title"], "author": thread["author"]}})
 
-            if thread["author"] == user:
-                contributions.append({
-                    "author": user,
-                    "contribution": thread["raw_body"],
-                    "created_at": thread["created_at"],
-                    "parent": {"name": thread["title"], "author": thread["author"]},
-                    "kind": "thread",
-                })
+            contributions.append({
+                "author": thread["author"],
+                "contribution": thread["raw_body"],
+                "created_at": thread["created_at"],
+                "parent": {"name": thread["title"], "author": thread["author"]},
+                "kind": "thread",
+            })
 
             comments += self._fetch_content(thread["comment_list_url"])
 
@@ -73,12 +78,14 @@ class ApiDiscussion(ApiInterface):
                 comments += self._fetch_content(url)
 
         contributions += [{
-            "author": user,
+            "author": comment["author"],
             "contribution": comment["raw_body"],
             "created_at": comment["created_at"],
             "parent": thread_dict[comment["thread_id"]],
             "kind": "comment",
-        } for comment in comments if comment["author"] == user]
+        } for comment in comments]
+
+        cache.set(key, contributions, CACHE_TIME)
 
         return contributions
 
@@ -100,30 +107,19 @@ class ApiDiscussion(ApiInterface):
         if not content_url:
             return []
 
-        content = self.cache_block.get(content_url)
+        response = self._handle_response(self.session.get(content_url))
 
-        if not content:
-
-            response = self._handle_response(self.session.get(content_url))
-
-            if response:
-                content = response.get("results", [])
-                content += self._fetch_content(response.get("pagination", {}).get("next"))
-                self.cache_block[content_url] = content
-                cache.set(self.cache_key, self.cache_block, CACHE_TIME)
-            else:
-                content = []
+        if response:
+            content = response.get("results", [])
+            content += self._fetch_content(response.get("pagination", {}).get("next"))
+        else:
+            content = []
 
         return content
 
     def _fetch_topics(self, topic_id=None):
         """
         """
-        key = "{}-{}".format("topics", topic_id)
-        topics = self.cache_block.get(key)
-
-        if topics:
-            return topics
 
         payload = {"topic_id": topic_id} if topic_id else None
 
@@ -132,11 +128,9 @@ class ApiDiscussion(ApiInterface):
         if response:
             topics = response.get("courseware_topics")
             topics += response.get("non_courseware_topics")
-            self.cache_block[key] = topics
-            cache.set(self.cache_key, self.cache_block, CACHE_TIME)
             return topics
 
-        return None
+        return []
 
     def _get_names(self, topics):
         """
