@@ -18,7 +18,7 @@ class ApiTeams(object):
         self.cache_block = cache.get(key, {})
         self.api_path = "{}/api/team/v0".format(server_url)
 
-        headers = None
+        headers = self.cache_block.get("headers")
 
         if not headers:
             oauth = OAuth2Session(client=BackendApplicationClient(client_id=client_id))

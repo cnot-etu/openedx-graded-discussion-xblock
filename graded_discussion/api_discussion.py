@@ -17,6 +17,7 @@ class ApiDiscussion(ApiInterface):
     def __init__(self, server_url, course, client_id, client_secret, key="api_discussion"):
 
         self.cache_key = key
+        self.course = course
         cache_block = cache.get(key, {})
         self.server_url = server_url
         self.api_path = "{}/api/discussion/v1/course_topics/{}".format(server_url, course)
@@ -50,16 +51,11 @@ class ApiDiscussion(ApiInterface):
         if contributions:
             return contributions
 
-        topics = self._fetch_topics(topic_id)
-        threads = []
         comments = []
         contributions = []
         thread_dict = {}
 
-        for topic in topics:
-            threads += self._fetch_content(topic.get("thread_list_url"))
-
-        for thread in threads:
+        for thread in self._get_threads(topic_id):
             thread_dict.update({thread["id"]: {"name": thread["title"], "author": thread["author"]}})
 
             contributions.append({
@@ -70,7 +66,7 @@ class ApiDiscussion(ApiInterface):
                 "kind": "thread",
             })
 
-            comments += self._fetch_content(thread["comment_list_url"])
+            comments += self._get_comments(thread)
 
         for comment in comments:
             if comment.get("child_count") > 0:
@@ -101,13 +97,13 @@ class ApiDiscussion(ApiInterface):
         topics = self._fetch_topics()
         return self._get_id(topics, name)
 
-    def _fetch_content(self, content_url=None):
+    def _fetch_content(self, content_url=None, payload=None):
         """
         """
         if not content_url:
             return []
 
-        response = self._handle_response(self.session.get(content_url))
+        response = self._handle_response(self.session.get(content_url, params=payload))
 
         if response:
             content = response.get("results", [])
@@ -131,6 +127,22 @@ class ApiDiscussion(ApiInterface):
             return topics
 
         return []
+
+    def _get_comments(self, thread):
+        """
+        """
+        comments = []
+        payload = {"page_size": 100}
+
+        if thread["comment_count"] > 0 and thread["type"] == "discussion":
+            comments += self._fetch_content(thread["comment_list_url"], payload)
+
+        elif thread["comment_count"] > 0 and thread["type"] == "question":
+            if thread["has_endorsed"]:
+                comments += self._fetch_content(thread["endorsed_comment_list_url"], payload)
+            comments += self._fetch_content(thread["non_endorsed_comment_list_url"], payload)
+
+        return comments
 
     def _get_names(self, topics):
         """
@@ -159,6 +171,15 @@ class ApiDiscussion(ApiInterface):
                     return topic_id
 
         return None
+
+    def _get_threads(self, topic_id):
+        """
+        """
+        url = "{}/api/discussion/v1/threads/".format(self.server_url)
+
+        payload = {"course_id": self.course, "topic_id": topic_id, "page_size": 100}
+
+        return self._fetch_content(content_url=url, payload=payload)
 
     def _handle_response(self, response):
         """
