@@ -6,7 +6,7 @@ class ApiInterface(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def get_user_contributions(self, user, topic_id=None):
+    def get_contributions(self, topic_id=None):
         """
         This returns all the contributions for a given user as a list
         """

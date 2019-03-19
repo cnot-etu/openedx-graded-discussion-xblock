@@ -174,6 +174,11 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
 
         return Response(json_body={"success": "success"})
 
+    @cached_property
+    def contributions(self):
+
+        return self.api_discussion.get_contributions(self.topic_id)
+
     def get_comment(self):
         """
         """
@@ -220,7 +225,7 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
             dict(
                 username=user.username,
                 image_url=self._get_image_url(user),
-                last_post=self._get_last_date_on_post(user.username),
+                last_post=self._get_last_date_on_post(self._get_contributions(user.username)),
                 cohort_id=get_cohort_id(user, self.course_id),
                 team=self.api_teams.get_user_team(unicode(self.course_id), user.username),
                 contributions=json.dumps(self._get_contributions(user.username)),
@@ -256,7 +261,7 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
         """
         require(self.is_course_staff())
         users = data.get("users")
-        cache.delete(self.location)
+        self._delete_cache(users)
         contributions = {user: json.dumps(self._get_contributions(user)) for user in users}
         return Response(json=contributions)
 
@@ -319,6 +324,15 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
         if start_date and end_date and end_date <= start_date:
             validation.add(ValidationMessage(ValidationMessage.ERROR, u"The start date must be before the end date"))
 
+    def _delete_cache(self, users):
+        cache.delete(self.location)
+        for user in users:
+            key = "{}-{}".format(self.location, user)
+            cache.delete(key)
+
+        key = "{}-{}".format(self.location, "contributions")
+        cache.delete(key)
+
     def _filter_by_date(self, contributions):
         """
         """
@@ -368,16 +382,17 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
         """
         This returns the contributions for a given username
         """
-        cache_block = cache.get(self.location, {})
-        contributions = cache_block.get(username)
-
+        key = "{}-{}".format(self.location, username)
+        contributions = cache.get(key)
         if contributions:
             return contributions
 
-        contributions = self._filter_by_date(self.api_discussion.get_user_contributions(username, self.topic_id))
+        contributions = [contribution for contribution in self.contributions if contribution["author"] == username]
 
-        cache_block[username] = contributions
-        cache.set(self.location, cache_block, 3600)
+        contributions = self._filter_by_date(contributions)
+
+        cache.set(key, contributions)
+
         return contributions
 
     def _get_graded_students(self):
@@ -406,10 +421,9 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
         image_url = "{}{}".format(base_url, profile_image_url)
         return image_url
 
-    def _get_last_date_on_post(self, username):
+    def _get_last_date_on_post(self, contributions):
         """
         """
-        contributions = self._get_contributions(username)
         contributions.sort(key=lambda item: item["created_at"])
         try:
             return contributions[0].get("created_at")
