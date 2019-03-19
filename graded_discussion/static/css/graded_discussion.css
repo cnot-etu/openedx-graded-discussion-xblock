@@ -34,7 +34,7 @@
 
 .contributions-section .parent-contribution {
   float: left;
-  font-size:0.7em;
+  font-size:0.5em;
   font-style: italic;
   padding-top: 1em;
 }
@@ -58,7 +58,7 @@
 }
 
 .contributions-section .date-time {
-  font-size:0.7em;
+  font-size:0.5em;
   display:block;
   font-style: italic;
   text-align:right;
@@ -118,11 +118,14 @@
 .grading-pop-up .staff-section .student-list-section .user-info{
     display: inline-block;
     vertical-align: middle;
-    padding-left: 1em;
+    padding: 0 0 0 1em;
+    margin: 0;
+    background: none;
+    width: auto;
 }
 
 .student-list-section .date-time {
-  font-size:0.6em;
+  font-size:0.5em;
   display:block;
   font-style: italic;
   text-align:right;
@@ -140,8 +143,8 @@
 
 .grading-pop-up .search .fa-search {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 0px;
+  left: 0px;
 }
 
 .grading-pop-up .search {
@@ -149,6 +152,7 @@
   color: #aaa;
   font-size: 16px;
   margin-bottom: 1em;
+  width: 100%;
 }
 
 .grading-pop-up .staff-section .rubric-section{
@@ -193,15 +197,6 @@
     overflow-y: auto;
 }
 
-/*.grading-pop-up .staff-section .grading-section{
-    flex: 1;
-}
-
-.grading-pop-up .staff-section .grading-section .grade-section{
-    text-align: end;
-    display: none;
-}*/
-
 .grading-pop-up .staff-section .filters li{
     margin: 0 0 1px 0;
 }
@@ -219,6 +214,9 @@
   max-width: 90%;
   width:90%;
   height:80%;
+  background: white;
+  position: relative;
+  overflow: unset;
 }
 
 .grade-section.grading-pop-up.modal .grading-section{
@@ -249,7 +247,8 @@
 .contributions-section li p {
     margin: 0;
     padding-left: 0px;
-    font-weight: unset;
+    font-weight: 100;
+    font-size: 16px;
 }
 
 .contributions-section {
@@ -261,6 +260,8 @@
 
 .grading-pop-up .staff-section #submit-button{
     margin-top: 10px;
+    margin-left: 0px;
+    display: block;
 }
 
 .grading-pop-up .reload-button{
@@ -278,4 +279,18 @@
 
 .graded_discussion_block .grade-section #grade-button{
     float: right;
+}
+
+.grading-pop-up .reload-button span {
+    display: block;
+}
+
+.grade-section.grading-pop-up #grade {
+    margin: 0;
+    width: 100%;
+    text-align: start;
+}
+
+.grade-section.grading-pop-up #comment {
+    border: 1px solid #c8c8c8;
 }
