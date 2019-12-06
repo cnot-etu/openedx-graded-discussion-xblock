@@ -120,8 +120,8 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
         Returns an instance of ApiDiscussion
         """
         try:
-            client_id = self.get_xblock_settings()["client_id"]
-            client_secret = self.get_xblock_settings()["client_secret"]
+            client_id = settings.XBLOCK_SETTINGS["client_id"]
+            client_secret = settings.XBLOCK_SETTINGS["client_secret"]
         except KeyError:
             raise
 
@@ -133,8 +133,8 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
         Returns an instance of ApiTeams
         """
         try:
-            client_id = self.get_xblock_settings()["client_id"]
-            client_secret = self.get_xblock_settings()["client_secret"]
+            client_id = settings.XBLOCK_SETTINGS["client_id"]
+            client_secret = settings.XBLOCK_SETTINGS["client_secret"]
         except KeyError:
             raise
 
