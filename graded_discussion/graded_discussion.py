@@ -224,6 +224,7 @@ class GradedDiscussionXBlock(XBlock, StudioEditableXBlockMixin, XBlockWithSettin
         return [
             dict(
                 username=user.username,
+                fullname=user.first_name + ' ' +user.last_name,
                 image_url=self._get_image_url(user),
                 last_post=self._get_last_date_on_post(self._get_contributions(user.username)),
                 cohort_id=get_cohort_id(user, self.course_id),

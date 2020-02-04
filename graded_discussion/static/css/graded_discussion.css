@@ -133,6 +133,11 @@
   text-align: end;
 }
 
+.student-list-section .fullname {
+  font-size:0.8em;
+  display:block;
+}
+
 .student-list-section .date-time:before{
   content: "Last post on: ";
 }
