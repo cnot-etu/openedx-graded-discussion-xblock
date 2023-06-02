@@ -1,7 +1,7 @@
 import logging
 import requests
 
-from api_interface import ApiInterface
+from graded_discussion.api_interface import ApiInterface
 
 from django.core.cache import cache
 from oauthlib.oauth2 import BackendApplicationClient

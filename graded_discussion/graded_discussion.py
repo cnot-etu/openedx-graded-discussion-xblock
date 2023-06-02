@@ -5,12 +5,12 @@ import pkg_resources
 
 from dateutil.parser import parse
 
-from api_discussion import ApiDiscussion
-from api_teams import ApiTeams
+from graded_discussion.api_discussion import ApiDiscussion
+from graded_discussion.api_teams import ApiTeams
 
-from courseware.courses import get_course_by_id
-from courseware.models import StudentModule
-from student.models import (
+from lms.djangoapps.courseware.courses import get_course_by_id
+from lms.djangoapps.courseware.models import StudentModule
+from common.djangoapps.student.models import (
     CourseEnrollmentManager,
     user_by_anonymous_id,
     get_user_by_username_or_email,
